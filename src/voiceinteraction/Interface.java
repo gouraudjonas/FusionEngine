@@ -9,12 +9,9 @@ import fr.dgac.ivy.Ivy;
 import fr.dgac.ivy.IvyClient;
 import fr.dgac.ivy.IvyException;
 import fr.dgac.ivy.IvyMessageListener;
-import fr.irit.elipse.enseignement.isia.PaletteGraphique;
-import java.awt.Canvas;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
 
 /**
  *
@@ -25,9 +22,11 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
     private Ivy bus;
     private String address;
     private final ArrayList<String> regexps;
-    private boolean isThereAFrame = false;
-    //JFrame squareWindow;
-    PaletteGraphique myPG;
+    private boolean isThereAPaletteFrame = false;
+    private boolean isThereAHergerFrame = false;
+    
+    // Data structure to stock commands
+    ArrayList<String> commands;
 
     /**
      * @param args the command line arguments
@@ -70,6 +69,7 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
         this.setLocation(800, 0);
 
         regexps = new ArrayList(30);
+        commands = new ArrayList<>();
     }
 
     private void setAllEnabled(boolean value) {
@@ -506,36 +506,9 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
     public void receive(IvyClient ic, String[] strings) {
         jTextArea1.setText(jTextArea1.getText() + "\n> " + ic.toString() + " : ");
         for (String string : strings) {
-            jTextArea1.setText(jTextArea1.getText() + string);
+            jTextArea1.setText(jTextArea1.getText() + "|" + string);
         }
 
-        if (findWord(strings, "initialiser")) {
-            // initialisation of window
-            if (!isThereAFrame) {
-                /*squareWindow = new JFrame();
-                Canvas myCanvas = new Canvas();
-                myCanvas.setPreferredSize(new java.awt.Dimension(500, 500));
-                
-                squareWindow.getContentPane().add(myCanvas);
-                squareWindow.pack();
-                squareWindow.setResizable(true);
-                squareWindow.setVisible(true);
-                squareWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                myCanvas.setFocusable(true);
-                myCanvas.requestFocusInWindow();*/
-                myPG = new PaletteGraphique(address, 0, 0, 300, 300);
-                
-                isThereAFrame = true;
-            }
-        }
-    }
-
-    public boolean findWord(String[] strings, String word) {
-        for (String string : strings) {
-            if (string.contains(word)) {
-                return true;
-            }
-        }
-        return false;
+        Commands.commandsGeneration(ic, strings, commands, bus);
     }
 }

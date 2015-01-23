@@ -456,6 +456,15 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
         } catch (IvyException ex) {
             Logger.getLogger(Interface.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        // Binding to all
+        try {
+            bus.bindMsg("^(.*)", this);
+            jTextArea2.setText(jTextArea2.getText() + "\n" + "^(.*)");
+            regexps.add("^(.*)");
+        } catch (IvyException ex) {
+            Logger.getLogger(Interface.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
@@ -506,7 +515,7 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
     public void receive(IvyClient ic, String[] strings) {
         jTextArea1.setText(jTextArea1.getText() + "\n> " + ic.toString() + " : ");
         for (String string : strings) {
-            jTextArea1.setText(jTextArea1.getText() + "|" + string);
+            jTextArea1.setText(jTextArea1.getText() + string);
         }
 
         Commands.commandsGeneration(ic, strings, commands, bus);

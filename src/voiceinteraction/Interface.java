@@ -25,9 +25,6 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
     private boolean isThereAPaletteFrame = false;
     private boolean isThereAHergerFrame = false;
     
-    // Data structure to stock commands
-    ArrayList<String> commands;
-
     /**
      * @param args the command line arguments
      */
@@ -518,6 +515,6 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
             jTextArea1.setText(jTextArea1.getText() + string);
         }
 
-        Commands.commandsGeneration(ic, strings, commands, bus);
+        Commands.commandsGeneration(strings, bus);
     }
 }

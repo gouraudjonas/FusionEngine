@@ -24,11 +24,63 @@ public class Commands {
     //private static boolean isThereAHergerFrame = false;
     private static boolean isThereAPaletteFrame = false;
     private static boolean isThereAIcarFrame = false;
+
     private static final String address = "127.255.255:2010";
     private static Timer timer = new Timer();
 
-    public static void commandsGeneration(IvyClient ic, String[] strings,
-            ArrayList<String> commands, Ivy bus) {
+    private static boolean create = false;
+    private static boolean moving = false;
+    private static boolean information = false;
+    private static boolean ici = false;
+
+    private static ArrayList<String[]> names = new ArrayList();
+    private static String formDesignate = "";
+    private static String instruction = "";
+
+    /**
+     * Manage treatment of all ivy messages and dispatch to lower units
+     * 
+     * @param strings
+     * @param bus 
+     */
+    public static void commandsGeneration(String[] strings, Ivy bus) {
+        // Initialize a client : palette, icar, herger
+        initialiser(strings);
+
+        // Get a creation
+        creation(strings, bus);
+
+        // Get a moving
+        moving(strings, bus);
+
+        // Get a mouse click
+        mouseReleased(strings, bus);
+
+        // Get a color
+        color(strings, bus);
+
+        // Get a place
+        emplacement(strings, bus);
+
+        // Get a test result
+        resultTesterPoint(strings, bus);
+
+        // Get an asking for information result
+        resultAskingInfo(strings);
+
+        // Get an information
+        information(strings, bus);
+
+        // Get a clean
+        clean(strings);
+    }
+    
+    /**
+     * Lower unit managing initialization
+     * 
+     * @param strings 
+     */
+    private static void initialiser(String[] strings) {
         if (findWord(strings, "initialiser")) {
             // Initiliaze Palette
             if (!isThereAPaletteFrame && findWord(strings, "palette")) {
@@ -49,209 +101,293 @@ public class Commands {
              isThereAHergerFrame = true;
              }*/
         }
+    }
 
-        // Get a creation
-        if (findWord(strings, "creation")) {
+    /**
+     * Lower unit managing creation
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void creation(String[] strings, Ivy bus) {
+        if (findWord(strings, "Action:creation")) {
             // A creation is the first command
-            executeCommands(commands, bus);
-            restartTimer(commands, bus);
+            executeCommands(bus);
+            restartTimer(bus);
 
             if (findWord(strings, "rectangle")) {
-                commands.add("creation rectangle");
+                instruction = instruction.concat("Palette:CreerRectangle ");
             } else if (findWord(strings, "ellipse")) {
-                commands.add("creation ellipse");
+                instruction = instruction.concat("Palette:CreerEllipse ");
             }
+            create = true;
         }
+    }
 
-        // Get a moving
-        if (findWord(strings, "deplacement")) {
+    /**
+     * Lower unit managing moving
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void moving(String[] strings, Ivy bus) {
+        if (findWord(strings, "Action:deplacement")) {
             // A creation is the first command
-            executeCommands(commands, bus);
-            restartTimer(commands, bus);
+            executeCommands(bus);
+            restartTimer(bus);
 
             if (findWord(strings, "rectangle")) {
-                commands.add("deplacement rectangle");
+                instruction = instruction.concat("Palette:DeplacerObjet ");
+                formDesignate = "R";
             } else if (findWord(strings, "ellipse")) {
-                commands.add("deplacement ellipse");
+                instruction = instruction.concat("Palette:DeplacerObjet ");
+                formDesignate = "E";
             }
+            moving = true;
         }
+    }
 
-        // Get a color
-        if (findWord(strings, "Couleur")) {
-            restartTimer(commands, bus);
+    /**
+     * Lower unit managing mouse releasing
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void mouseReleased(String[] strings, Ivy bus) {
+        if (findWord(strings, "Palette:MouseReleased")) {
+            restartTimer(bus);
 
-            if (findWord(strings, "vert")) {
-                commands.add("couleur vert");
-            } else if (findWord(strings, "rouge")) {
-                commands.add("couleur rouge");
-            } else if (findWord(strings, "bleu")) {
-                commands.add("couleur bleu");
-            }
-        }
-
-        // Get a place
-        if (findWord(strings, "Emplacement")) {
-            restartTimer(commands, bus);
-
-            if (findWord(strings, "ici")) {
-                commands.add("emplacement ici");
-            }
-        }
-
-        // Get a mouse click
-        if (findWord(strings, "MousePressed")) {
-            restartTimer(commands, bus);
-
-            int x = 0, y = 0;
+            String x, y;
 
             // Get numbers and equal signs
             String copy = strings[0].replaceAll("[([a-z]|[A-Z]|:| )]", "");
             // Get numbers
             String[] numbers = copy.split("=");
-            x = Integer.parseInt(numbers[1]);
-            y = Integer.parseInt(numbers[2]);
+            x = numbers[1];
+            y = numbers[2];
 
-            commands.add("mousepressed");
-            commands.add(Integer.toString(x));
-            commands.add(Integer.toString(y));
+            // If it's a creation, then add information to the command
+            if (create) {
+                instruction = instruction.concat("x=" + x + " y=" + y + " ");
+
+                // If it's a moving, then ask name of showed form
+            } else if (moving) {
+                try {
+                    bus.sendMsg("Palette:TesterPoint x=" + x + " y=" + y);
+                } catch (IvyException ex) {
+                    Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else if (ici && !(names.isEmpty())) {
+                // Normally it remains only one element
+                instruction = instruction.concat("nom=" + names.get(0)[0] + " ");
+
+                int deltaX = Integer.parseInt(x) - Integer.parseInt(names.get(0)[1]);
+                int deltaY = Integer.parseInt(y) - Integer.parseInt(names.get(0)[2]);
+                instruction = instruction.concat("x=" + deltaX + " y=" + deltaY + " ");
+            }
         }
+    }
 
-        // Get a clean
+    /**
+     * Lower unit managing colors
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void color(String[] strings, Ivy bus) {
+        if (findWord(strings, "Couleur")) {
+            restartTimer(bus);
+
+            if (create) {
+                if (findWord(strings, "rouge")) {
+                    instruction = instruction.concat("couleurFond=255:0:0 couleurContour=255:0:0 ");
+                }
+                if (findWord(strings, "vert")) {
+                    instruction = instruction.concat("couleurFond=0:255:0 couleurContour=0:255:0 ");
+                }
+                if (findWord(strings, "bleu")) {
+                    instruction = instruction.concat("couleurFond=0:0:255 couleurContour=0:0:255 ");
+                }
+
+                // If it's a moving, then color is designation information
+            } else if (moving) {
+                String designateColor = "";
+                if (findWord(strings, "rouge")) {
+                    designateColor = "rouge";
+                } else if (findWord(strings, "vert")) {
+                    designateColor = "vert";
+                } else if (findWord(strings, "bleu")) {
+                    designateColor = "bleu";
+                }
+
+                for (String[] element : names) {
+                    if (element[3].contains(designateColor)) {
+                        instruction = instruction.concat("nom=" + element[0] + " ");
+                    } else {
+                        names.remove(element);
+                    }
+                }
+                moving = false;
+            }
+        }
+    }
+
+    /**
+     * Lower unit managing declaration of a future emplacement ("ici")
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void emplacement(String[] strings, Ivy bus) {
+        if (findWord(strings, "Emplacement")) {
+            restartTimer(bus);
+            ici = true;
+        }
+    }
+
+    /**
+     * Lower unit managing result of an asking to test if a point is inside a form
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void resultTesterPoint(String[] strings, Ivy bus) {
+        if (findWord(strings, "Palette:ResultatTesterPoint")) {
+            // We don't care about the first part, the second is the name
+            String[] nameFormShowed = strings[0].split("nom=");
+
+            // There is no need to seek information if it's not the desired form
+            if (nameFormShowed[1].contains(formDesignate)) {
+                try {
+                    bus.sendMsg("Palette:DemanderInfo nom=" + nameFormShowed[1]);
+                } catch (IvyException ex) {
+                    Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Lower unit managing result of an asking to have informations about a form
+     * 
+     * @param strings 
+     */
+    private static void resultAskingInfo(String[] strings) {
+        if (findWord(strings, "Palette:Info")) {
+            if (moving) {
+                String[] infoFormShowed = strings[0].split("=");
+
+                String[] usefulInfos = new String[4];
+                usefulInfos[0] = infoFormShowed[1].replaceAll("[[^RE0123456789]]", "");
+                usefulInfos[1] = infoFormShowed[2].replaceAll("[[^0-9]]", "");
+                usefulInfos[2] = infoFormShowed[3].replaceAll("[[^0-9]]", "");
+                if (findWord(strings, "r=255,g=0,b=0")) {
+                    usefulInfos[3] = "rouge";
+                } else if (findWord(strings, "r=0,g=255,b=0")) {
+                    usefulInfos[3] = "vert";
+                } else if (findWord(strings, "r=0,g=0,b=255")) {
+                    usefulInfos[3] = "bleu";
+                }
+                names.add(usefulInfos);
+
+                moving = false;
+            }
+        }
+    }
+
+    /**
+     * Lower unit managing information asking
+     * 
+     * @param strings
+     * @param bus 
+     */
+    private static void information(String[] strings, Ivy bus) {
+        if (findWord(strings, "information")) {
+            restartTimer(bus);
+            information = true;
+        }
+    }
+
+    /**
+     * Lower unit managing cleaning of instructions
+     * 
+     * @param strings 
+     */
+    private static void clean(String[] strings) {
         if (findWord(strings, "nettoyer") && findWord(strings, "commandes")) {
             timer.cancel();
             timer.purge();
             timer = new Timer();
-            executeCommands(commands, bus);
+            instruction = "";
         }
     }
 
-    public static void restartTimer(ArrayList<String> commands, Ivy bus) {
+    /**
+     * Restart the timer
+     * 
+     * @param bus 
+     */
+    public static void restartTimer(Ivy bus) {
         timer.cancel();
         timer.purge();
         timer = new Timer();
-        setTimerTask(commands, bus);
+        setTimerTask(bus);
     }
 
-    public static void setTimerTask(ArrayList<String> commands, Ivy bus) {
+    /**
+     * Launch the timer for 2s ; at the end it executes executeCommands function
+     * 
+     * @param bus 
+     */
+    public static void setTimerTask(Ivy bus) {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                executeCommands(commands, bus);
+                executeCommands(bus);
             }
         }, 2000);
     }
 
     /**
-     * Put all stored instructions into a single String and send it when there
-     * is no more commands stored, then clear the command storage
-     *
-     * @param commands
-     * @param bus
+     * Send instruction on the ivy bus and reset all variables
+     * 
+     * @param bus 
      */
-    public static void executeCommands(ArrayList<String> commands, Ivy bus) {
-        System.out.print("DEBUG > inside commands ");
-        commands.stream().forEach((command) -> {
-            System.out.print(" - " + command);
-        });
-        System.out.println();
-
-        String instruction = "";
-        int stage = 0;
-
-        if (commands.isEmpty()) {
-            return;
-        }
-
-        // First stage : creation, moving or modify
-        if (findWord(commands.get(stage), "creation")
-                || findWord(commands.get(stage), "deplacer ce")
-                || findWord(commands.get(stage), "modifier ce")) {
-            if (findWord(commands.get(stage), "creation")) {
-                // Creation of a rectangle
-                if (findWord(commands.get(stage), "rectangle")) {
-                    instruction = instruction.concat("Palette:CreerRectangle ");
-                }
-                if (findWord(commands.get(stage), "ellipse")) {
-                    instruction = instruction.concat("Palette:CreerEllipse ");
-                }
-            }
-
-            // First stage : moving
-            if (findWord(commands.get(stage), "deplacement")) {
-                // Creation of a rectangle
-                if (findWord(commands.get(stage), "rectangle")) {
-                    instruction = instruction.concat("Palette:DeplacerObjet ");
-                }
-                if (findWord(commands.get(stage), "ellipse")) {
-                    instruction = instruction.concat("Palette:DeplacerObjet ");
-                }
-            }
-
-            stage++;
-        }
-
-        // Second stage : designation
-        /*if (commands.size() > stage) {
-            if ((commands.size() > stage + 3)
-                    && (findWord(commands.get(stage + 1), "mousepressed"))) {
-                stage++;
-
-                // x and y are in a different String than mousepressed, easier to store and take back
-                instruction = instruction.concat("x=" + commands.get(stage + 1)
-                        + " y=" + commands.get(stage + 2) + " ");
-
-                stage = stage + 2;
-            }
-            stage++;
-        }*/
-
-        // Second stage or fourth : place
-        if (commands.size() > stage) {
-            if (findWord(commands.get(stage), "ici")) {
-                // No treatment for that instruction but click should follow
-                if ((commands.size() > stage + 3)
-                        && (findWord(commands.get(stage + 1), "mousepressed"))) {
-                    stage++;
-
-                    // x and y are in a different String than mousepressed, easier to store and take back
-                    instruction = instruction.concat("x=" + commands.get(stage + 1)
-                            + " y=" + commands.get(stage + 2) + " ");
-
-                    stage = stage + 2;
-                }
-                stage++;
-            }
-        }
-
-        // Second or third stage : color
-        if (commands.size() > stage) {
-            // Color
-            if (findWord(commands.get(stage), "couleur")) {
-                if (findWord(commands.get(stage), "rouge")) {
-                    instruction = instruction.concat("couleurFond=255:0:0 couleurContour=255:0:0 ");
-                }
-                if (findWord(commands.get(stage), "vert")) {
-                    instruction = instruction.concat("couleurFond=0:255:0 couleurContour=0:255:0 ");
-                }
-                if (findWord(commands.get(stage), "bleu")) {
-                    instruction = instruction.concat("couleurFond=0:0:255 couleurContour=0:0:255 ");
-                }
-                stage++;
-            }
-        }
-
+    public static void executeCommands(Ivy bus) {
         try {
-            bus.sendMsg(instruction);
+            if (instruction != "") {
+                bus.sendMsg(instruction);
+            }
         } catch (IvyException ex) {
             Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
         }
-        commands.clear();
+
+        instruction = "";
+        formDesignate = "";
+        names.clear();
+        create = false;
+        moving = false;
+        information = false;
     }
 
+    /**
+     * Find a specified word inside a string
+     * 
+     * @param string
+     * @param word
+     * @return true if the word is inside the string, false if not
+     */
     public static boolean findWord(String string, String word) {
         return string.contains(word);
     }
 
+    /**
+     * Find a specified word inside a string array 
+     * 
+     * @param strings
+     * @param word
+     * @return true if the word is inside the string, false if not
+     */
     public static boolean findWord(String[] strings, String word) {
         for (String string : strings) {
             if (string.contains(word)) {

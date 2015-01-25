@@ -66,7 +66,6 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
         this.setLocation(800, 0);
 
         regexps = new ArrayList(30);
-        commands = new ArrayList<>();
     }
 
     private void setAllEnabled(boolean value) {

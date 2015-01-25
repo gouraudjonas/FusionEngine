@@ -178,6 +178,12 @@ public class Commands {
                     Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else if (ici && !(names.isEmpty())) {
+                // If there is already a color, then it's necessary to inject
+                // place between action declaration and color (Palette convention)
+                if (findWord(instruction, "couleur")){
+                    // TODO mais là j'ai faim
+                }
+                
                 // Normally it remains only one element
                 instruction = instruction.concat("nom=" + names.get(0)[0] + " ");
 

@@ -21,8 +21,9 @@ import java.util.logging.Logger;
  */
 public class Commands {
 
-    private static boolean isThereAHergerFrame = false;
+    //private static boolean isThereAHergerFrame = false;
     private static boolean isThereAPaletteFrame = false;
+    private static boolean isThereAIcarFrame = false;
     private static final String address = "127.255.255:2010";
     private static Timer timer = new Timer();
 
@@ -35,10 +36,17 @@ public class Commands {
                 isThereAPaletteFrame = true;
             }
 
+            // Initialize Icar
+            if (!isThereAIcarFrame && findWord(strings, "icar")) {
+                // Not the proper component to initialize, nothing happens
+                //icar.IcarComponent myIcar = new icar.IcarComponent(address, 100, 100);
+                isThereAIcarFrame = true;
+            }
+
             // Initialize Herger
-            /*if (!isThereAHergerFrame && findWord(strings, "geste")) {
-             myPG = new HergerUI(address, 0, 0, 300, 300);
-             isThereAPaletteFrame = true;
+            /*if (!isThereAHergerFrame && findWord(strings, "herger")) {
+             HergerUI myHerger = new HergerUI(address, 0, 0, 300, 300);
+             isThereAHergerFrame = true;
              }*/
         }
 
@@ -46,13 +54,25 @@ public class Commands {
         if (findWord(strings, "creation")) {
             // A creation is the first command
             executeCommands(commands, bus);
+            restartTimer(commands, bus);
 
             if (findWord(strings, "rectangle")) {
                 commands.add("creation rectangle");
-                setTimerTask(commands, bus);
             } else if (findWord(strings, "ellipse")) {
                 commands.add("creation ellipse");
-                setTimerTask(commands, bus);
+            }
+        }
+
+        // Get a moving
+        if (findWord(strings, "deplacement")) {
+            // A creation is the first command
+            executeCommands(commands, bus);
+            restartTimer(commands, bus);
+
+            if (findWord(strings, "rectangle")) {
+                commands.add("deplacement rectangle");
+            } else if (findWord(strings, "ellipse")) {
+                commands.add("deplacement ellipse");
             }
         }
 
@@ -69,14 +89,13 @@ public class Commands {
             }
         }
 
-        // Get an place
+        // Get a place
         if (findWord(strings, "Emplacement")) {
             restartTimer(commands, bus);
 
             if (findWord(strings, "ici")) {
                 commands.add("emplacement ici");
             }
-
         }
 
         // Get a mouse click
@@ -98,7 +117,7 @@ public class Commands {
         }
 
         // Get a clean
-        if (findWord(strings, "cline")) {
+        if (findWord(strings, "nettoyer") && findWord(strings, "commandes")) {
             timer.cancel();
             timer.purge();
             timer = new Timer();
@@ -122,6 +141,13 @@ public class Commands {
         }, 2000);
     }
 
+    /**
+     * Put all stored instructions into a single String and send it when there
+     * is no more commands stored, then clear the command storage
+     *
+     * @param commands
+     * @param bus
+     */
     public static void executeCommands(ArrayList<String> commands, Ivy bus) {
         System.out.print("DEBUG > inside commands ");
         commands.stream().forEach((command) -> {
@@ -129,79 +155,101 @@ public class Commands {
         });
         System.out.println();
 
+        String instruction = "";
+        int stage = 0;
+
         if (commands.isEmpty()) {
             return;
         }
-        try {
-            if (findWord(commands.get(0), "creation")) {
+
+        // First stage : creation, moving or modify
+        if (findWord(commands.get(stage), "creation")
+                || findWord(commands.get(stage), "deplacer ce")
+                || findWord(commands.get(stage), "modifier ce")) {
+            if (findWord(commands.get(stage), "creation")) {
                 // Creation of a rectangle
-                if (findWord(commands.get(0), "rectangle")) {
-                    if (commands.size() == 1) {
-                        bus.sendMsg("Palette:CreerRectangle");
-                    } else if (findWord(commands.get(1), "couleur")) {
-
-                        if (findWord(commands.get(1), "rouge")) {
-                            if (commands.size() >= 3) {
-                                if (findWord(commands.get(2), "ici")) {
-                                    if (commands.size() >= 6 && findWord(commands.get(3), "mousepressed")) {
-                                        // x and y are in a different String than mousepressed, easier to store and take back
-                                        bus.sendMsg("Palette:CreerRectangle x=" + commands.get(4) + " y=" + commands.get(5) + " couleurFond=255:0:0 couleurContour=255:0:0");
-                                    } else {
-                                        bus.sendMsg("Palette:CreerRectangle  couleurFond=255:0:0 couleurContour=255:0:0");
-                                    }
-                                }
-                            } else {
-                                bus.sendMsg("Palette:CreerRectangle couleurFond=255:0:0 couleurContour=255:0:0");
-                            }
-                        } else if (findWord(commands.get(1), "vert")) {
-                            bus.sendMsg("Palette:CreerRectangle couleurFond=0:255:0 couleurContour=0:255:0");
-                        } else if (findWord(commands.get(1), "bleu")) {
-                            bus.sendMsg("Palette:CreerRectangle couleurFond=0:0:255 couleurContour=0:0:255");
-                        }
-
-                    } else if (findWord(commands.get(1), "ici")) {
-                        if (commands.size() >= 5 && findWord(commands.get(2), "mousepressed")) {
-                            // x and y are in a different String than mousepressed, easier to store and take back
-                            bus.sendMsg("Palette:CreerRectangle x=" + commands.get(3) + " y=" + commands.get(4));
-                        } else {
-                            bus.sendMsg("Palette:CreerRectangle");
-                        }
-                    }
-
-                    // Creation of an ellipse
-                } else if (findWord(commands.get(0), "ellipse")) {
-                    if (commands.size() == 1) {
-                        bus.sendMsg("Palette:CreerEllipse");
-                    } else if (findWord(commands.get(1), "couleur")) {
-                        if (findWord(commands.get(1), "rouge")) {
-                            bus.sendMsg("Palette:CreerEllipse couleurFond=255:0:0 couleurContour=255:0:0");
-                        } else if (findWord(commands.get(1), "vert")) {
-                            bus.sendMsg("Palette:CreerEllipse couleurFond=0:255:0 couleurContour=0:255:0");
-                        } else if (findWord(commands.get(1), "bleu")) {
-                            bus.sendMsg("Palette:CreerEllipse couleurFond=0:0:255 couleurContour=0:0:255");
-                        }
-                    } else if (findWord(commands.get(1), "ici")) {
-                        if (commands.size() >= 5 && findWord(commands.get(2), "mousepressed")) {
-                            bus.sendMsg("Palette:CreerEllipse x=" + commands.get(3) + " y=" + commands.get(4));
-                        } else {
-                            bus.sendMsg("Palette:CreerEllipse");
-                        }
-                    }
+                if (findWord(commands.get(stage), "rectangle")) {
+                    instruction = instruction.concat("Palette:CreerRectangle ");
+                }
+                if (findWord(commands.get(stage), "ellipse")) {
+                    instruction = instruction.concat("Palette:CreerEllipse ");
                 }
             }
+
+            // First stage : moving
+            if (findWord(commands.get(stage), "deplacement")) {
+                // Creation of a rectangle
+                if (findWord(commands.get(stage), "rectangle")) {
+                    instruction = instruction.concat("Palette:DeplacerObjet ");
+                }
+                if (findWord(commands.get(stage), "ellipse")) {
+                    instruction = instruction.concat("Palette:DeplacerObjet ");
+                }
+            }
+
+            stage++;
+        }
+
+        // Second stage : designation
+        /*if (commands.size() > stage) {
+            if ((commands.size() > stage + 3)
+                    && (findWord(commands.get(stage + 1), "mousepressed"))) {
+                stage++;
+
+                // x and y are in a different String than mousepressed, easier to store and take back
+                instruction = instruction.concat("x=" + commands.get(stage + 1)
+                        + " y=" + commands.get(stage + 2) + " ");
+
+                stage = stage + 2;
+            }
+            stage++;
+        }*/
+
+        // Second stage or fourth : place
+        if (commands.size() > stage) {
+            if (findWord(commands.get(stage), "ici")) {
+                // No treatment for that instruction but click should follow
+                if ((commands.size() > stage + 3)
+                        && (findWord(commands.get(stage + 1), "mousepressed"))) {
+                    stage++;
+
+                    // x and y are in a different String than mousepressed, easier to store and take back
+                    instruction = instruction.concat("x=" + commands.get(stage + 1)
+                            + " y=" + commands.get(stage + 2) + " ");
+
+                    stage = stage + 2;
+                }
+                stage++;
+            }
+        }
+
+        // Second or third stage : color
+        if (commands.size() > stage) {
+            // Color
+            if (findWord(commands.get(stage), "couleur")) {
+                if (findWord(commands.get(stage), "rouge")) {
+                    instruction = instruction.concat("couleurFond=255:0:0 couleurContour=255:0:0 ");
+                }
+                if (findWord(commands.get(stage), "vert")) {
+                    instruction = instruction.concat("couleurFond=0:255:0 couleurContour=0:255:0 ");
+                }
+                if (findWord(commands.get(stage), "bleu")) {
+                    instruction = instruction.concat("couleurFond=0:0:255 couleurContour=0:0:255 ");
+                }
+                stage++;
+            }
+        }
+
+        try {
+            bus.sendMsg(instruction);
         } catch (IvyException ex) {
             Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         commands.clear();
     }
 
     public static boolean findWord(String string, String word) {
-        if (string.contains(word)) {
-            return true;
-        }
-
-        return false;
+        return string.contains(word);
     }
 
     public static boolean findWord(String[] strings, String word) {

@@ -525,6 +525,6 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
             jTextArea1.setText(jTextArea1.getText() + string);
         }
 
-        Commands1.commandsTreatment(strings, bus);
+        Commands.commandsTreatment(strings, bus);
     }
 }

@@ -14,11 +14,15 @@
    <rule id="answer" scope="public"> 
     <ruleref special="GARBAGE" /> 
     <one-of>
-      <!--<item><ruleref uri="#deplacement"/></item>-->
+      <item><ruleref uri="#deplacement"/></item>
+      <item><ruleref uri="#creation"/></item>
       <item><ruleref uri="#initialiser"/></item>
       <item><ruleref uri="#couleur"/></item>
       <item><ruleref uri="#designationcouleur"/></item>
       <item><ruleref uri="#emplacement"/></item>
+      <item><ruleref uri="#nettoyer"/></item>
+      <item><ruleref uri="#information"/></item>
+      <item><ruleref uri="#commecela"/></item>
     </one-of>          
     <tag>out = rules.latest().text;</tag>
     <ruleref special="GARBAGE" />
@@ -34,24 +38,53 @@
     <one-of>
       <item>palette</item>
       <item>icar</item>
+      <item>herger</item>
     </one-of>      
     <tag>out.text  = "Action:initialiser Service:" + meta.current().text;</tag>
   </rule>
 
+   <!--CREATION-->
+  <rule id="creation">
+	<item>creer <ruleref uri="#forme"/></item>
+  </rule>
+
+<!--FORMES-->
+  <rule id="forme">
+    <one-of>
+      <item>rectangle</item>
+      <item>ellipse</item>
+    </one-of>      
+    <tag>out.text  = "Action:creation Forme:" + meta.current().text;</tag>
+  </rule>
+
    <!--DEPLACEMENT-->
-   <!--<rule id="deplacement">
-    <item>deplacer <ruleref uri="#position"/></item>
+   <rule id="deplacement">
+	<one-of>
+    	  <item>deplacer <ruleref uri="#position"/></item>
+    	  <item>deplacer <ruleref uri="#formedeplacement"/></item>
+	</one-of>
   </rule> 
   
+<!--FORMES DEPLACEMENT-->
+  <rule id="formedeplacement">
+    <one-of>
+      <item>rectangle</item>
+      <item>ellipse</item>
+    </one-of>      
+    <tag>out.text  = "Action:deplacement Forme:" + meta.current().text;</tag>
+  </rule>
+
+<!--POSITION-->
   <rule id="position">
     <one-of>
       <item>en haut</item>
       <item>en bas</item>
       <item>a gauche</item>
       <item>a droite</item>
+	<item></item>
     </one-of>      
     <tag>out.text  = "Action:deplacement Position:" + meta.current().text;</tag>
-  </rule>-->
+  </rule>
   
    <!--COULEUR-->
   <rule id="couleur">
@@ -74,5 +107,31 @@
       <item>ici</item>
       <tag>out.text  = "Emplacement:" + meta.current().text;</tag>
   </rule>
+
+<!--NETTOYER-->
+  <rule id="nettoyer">
+	<item>nettoyer <ruleref uri="#element"/></item>
+  </rule>
+
+   <!--ELEMENT-->
+  <rule id="element">
+    <one-of>
+      <item>commandes</item>
+    </one-of>      
+    <tag>out.text  = "Action:nettoyer Element:" + meta.current().text;</tag>
+  </rule>
+
+<!--INFORMATION-->
+  <rule id="information">
+      <item>information</item>
+      <tag>out.text  = "Information:" + meta.current().text;</tag>
+  </rule>
+
+<!--COMME CELA-->
+  <rule id="commecela">
+      <item>comme cela</item>
+      <tag>out.text  = "Comme cela:" + meta.current().text;</tag>
+  </rule>
+
 
 </grammar>

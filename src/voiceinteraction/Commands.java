@@ -6,7 +6,6 @@
 package voiceinteraction;
 
 import fr.dgac.ivy.Ivy;
-import fr.dgac.ivy.IvyClient;
 import fr.dgac.ivy.IvyException;
 import fr.irit.elipse.enseignement.isia.PaletteGraphique;
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author sacapuce
+ * @author Jonas Gouraud, Sandra Bardot
  */
 public class Commands {
 
@@ -91,7 +90,7 @@ public class Commands {
             // Initialize Icar
             if (!isThereAIcarFrame && findWord(strings, "icar")) {
                 // Not the proper component to initialize, nothing happens
-                //icar.IcarComponent myIcar = new icar.IcarComponent(address, 100, 100);
+                //icar.Ica myIcar = new icar.IcarComponent(address, 100, 100);
                 isThereAIcarFrame = true;
             }
 

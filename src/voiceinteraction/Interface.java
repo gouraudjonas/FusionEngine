@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2014 Sandra Bardot Jonas Gouraud
+ * 
+ * This file is part of FusionEngine.
+ *
+ * FusionEngine is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * FusionEngine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with FusionEngine. If not, see <http://www.gnu.org/licenses/>.
  */
 package voiceinteraction;
 
@@ -15,15 +28,13 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author gouraujo
+ * @author Jonas Gouraud
  */
 public class Interface extends javax.swing.JFrame implements IvyMessageListener {
 
     private Ivy bus;
     private String address;
     private final ArrayList<String> regexps;
-    private boolean isThereAPaletteFrame = false;
-    private boolean isThereAHergerFrame = false;
     
     /**
      * @param args the command line arguments
@@ -514,6 +525,6 @@ public class Interface extends javax.swing.JFrame implements IvyMessageListener 
             jTextArea1.setText(jTextArea1.getText() + string);
         }
 
-        Commands.commandsGeneration(strings, bus);
+        Commands1.commandsTreatment(strings, bus);
     }
 }

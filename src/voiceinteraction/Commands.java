@@ -50,7 +50,7 @@ public class Commands {
     private static boolean moving = false;
     private static boolean place = false;
     private static boolean color = false;
-    private static boolean ici = false;
+    private static boolean here = false;
     private static boolean designateColor = false;
 
     private static String formName = "";
@@ -69,7 +69,7 @@ public class Commands {
     // 4 => creation d'une forme a un emplacement et avec une couleur
     // 5 => deplacer une forme a un emplacement
     // 6 => deplacer une forme selon un mouvement
-    private static int number = 0;
+    private static int state = 0;
 
     /**
      * Manage treatment of all ivy messages and dispatch to lower units
@@ -150,7 +150,7 @@ public class Commands {
             }
 
             // State machine
-            number = 1;
+            state = 1;
             create = true;
         }
     }
@@ -174,7 +174,7 @@ public class Commands {
             }
 
             // State machine
-            number = -1;
+            state = -1;
             moving = true;
         }
     }
@@ -199,21 +199,21 @@ public class Commands {
             y = numbers[2];
 
             // If it's a creation, then add information to the command
-            if (create && ici) {
+            if (create && here) {
                 placeName = "x=" + x + " y=" + y;
 
                 //State machine
                 if (color) {
-                    number = 4;
+                    state = 4;
                 } else {
-                    number = 2;
+                    state = 2;
                 }
                 place = true;
 
             } else if (moving) {
 
                 // If we have the name of the form, then we remember it
-                if (ici && !(names.isEmpty())) {
+                if (here && !(names.isEmpty())) {
                     int deltaX, deltaY;
                     // We will move all remaining elements
                     names.stream().forEach((element) -> {
@@ -226,11 +226,11 @@ public class Commands {
                     movement = "x=" + deltaX + " y=" + deltaY;
 
                     // State machine
-                    number = 5;
+                    state = 5;
                     place = true;
 
                     // If we don't have yet the name of the form, then we ask
-                } else if (!ici) {
+                } else if (!here) {
                     try {
                         placeName = "x=" + x + " y=" + y;
                         bus.sendMsg("Palette:TesterPoint " + placeName);
@@ -239,7 +239,7 @@ public class Commands {
                     }
 
                     // State machine
-                    number = -1;
+                    state = -1;
                 }
             }
         }
@@ -267,9 +267,9 @@ public class Commands {
 
                 //State machine
                 if (place) {
-                    number = 4;
+                    state = 4;
                 } else {
-                    number = 3;
+                    state = 3;
                 }
                 color = true;
 
@@ -294,7 +294,7 @@ public class Commands {
                 names = temp;
                 
                 // State machine
-                number = -1;
+                state = -1;
                 designateColor = true;
             }
         }
@@ -309,7 +309,7 @@ public class Commands {
     private static void emplacement(String[] strings, Ivy bus) {
         if (findWord(strings, "Emplacement")) {
             restartTimer(bus);
-            ici = true;
+            here = true;
         }
     }
 
@@ -367,7 +367,7 @@ public class Commands {
                 names.add(usefulInfos);
 
                 // State machine
-                number = -1;
+                state = -1;
             }
             /*System.out.print("DEBUG > names contains : |");
             names.stream().map((element) -> {
@@ -434,7 +434,7 @@ public class Commands {
     // 6 => deplacer une forme selon un mouvement
     private static void executeCommands(Ivy bus) {
         try {
-            switch (number) {
+            switch (state) {
                 case -1:
                     bus.sendMsg("Wrong set of instructions");
                 case 0:
@@ -480,7 +480,7 @@ public class Commands {
         movement = "";
 
         // Number and arraylists
-        number = 0;
+        state = 0;
         names.clear();
         designateFormNames.clear();
 
@@ -489,7 +489,7 @@ public class Commands {
         moving = false;
         place = false;
         color = false;
-        ici = false;
+        here = false;
         designateColor = false;
     }
 

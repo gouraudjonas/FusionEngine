@@ -83,6 +83,9 @@ public class Commands {
 
         // Get a creation
         creation(strings, bus);
+        
+        // Get a creation from ICAR
+        creation_forme(strings, bus);
 
         // Get a moving
         moving(strings, bus);
@@ -155,6 +158,26 @@ public class Commands {
         }
     }
 
+    
+    private static void creation_forme(String[] strings, Ivy bus) {
+        if (findWord(strings, "ICAR")) {
+            // Cleaning and timer
+            executeCommands(bus);
+            restartTimer(bus);
+
+            // Recognition
+            if (findWord(strings, "Rectangle")) {
+                formName = "Rectangle";
+            } else if (findWord(strings, "Ellipse")) {
+                formName = "Ellipse";
+            }
+
+            // State machine
+            state = 1;
+            create = true;
+        }
+    }
+    
     /**
      * Lower unit managing moving
      *

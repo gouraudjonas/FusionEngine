@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sandra Bardot Jonas Gouraud
+ * Copyright (C) 2015 Sandra Bardot Jonas Gouraud
  * 
  * This file is part of FusionEngine.
  *
